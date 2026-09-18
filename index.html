@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rice Export P&L Calculator</title>
+<style>
+  body { font-family: sans-serif; padding: 12px; background: #f4f6f9; color: #333; margin:0; }
+  h2 { color: #003366; font-size: 18px; margin-top: 0; }
+  .box { background: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  label { font-size: 12px; font-weight: bold; display: block; margin-top: 8px; }
+  .row { display: flex; gap: 8px; }
+  input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+  .res-title { font-size: 12px; color: #666; }
+  .res-val { font-size: 20px; font-weight: bold; color: #28a745; margin-top: 4px; }
+  .metric { font-size: 12px; background: #e9ecef; padding: 6px; border-radius: 4px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h2>🌾 Export P&L Calculator</h2>
+
+<div class="box">
+  <label>Exchange Rates</label>
+  <div class="row">
+    <input type="number" id="usd_inr" value="95.90" step="0.1" oninput="calc()" placeholder="1 USD in INR">
+    <input type="number" id="aed_inr" value="26.09" step="0.1" oninput="calc()" placeholder="1 AED in INR">
+  </div>
+</div>
+
+<div class="box">
+  <label>Cargo Details</label>
+  <div class="row">
+    <input type="number" id="qty" value="24" oninput="calc()" placeholder="Quantity (MT)">
+    <input type="number" id="bag" value="50" oninput="calc()" placeholder="Bag Weight (kg)">
+  </div>
+
+  <label>Ex-Mill Price (per kg)</label>
+  <div class="row">
+    <input type="number" id="exmill" value="33" oninput="calc()">
+    <select id="exmill_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+  </div>
+
+  <label>Packaging (per bag)</label>
+  <div class="row">
+    <input type="number" id="pkg" value="18" oninput="calc()">
+    <select id="pkg_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+  </div>
+
+  <label>Inland Transport & Port (India)</label>
+  <div class="row">
+    <input type="number" id="inland" value="68500" oninput="calc()">
+    <select id="inland_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+  </div>
+
+  <label>Ocean Freight</label>
+  <div class="row">
+    <input type="number" id="freight" value="500" oninput="calc()">
+    <select id="freight_c" onchange="calc()"><option value="USD">USD</option><option value="AED">AED</option><option value="INR">INR</option></select>
+  </div>
+
+  <label>UAE Port, Clearance & Trucking</label>
+  <div class="row">
+    <input type="number" id="uae_costs" value="3246" oninput="calc()">
+    <select id="uae_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
+  </div>
+</div>
+
+<div class="box">
+  <label>Selling Price (per 50kg bag)</label>
+  <div class="row">
+    <input type="number" id="sell" value="106" oninput="calc()">
+    <select id="sell_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
+  </div>
+</div>
+
+<div class="box" style="background:#e8f5e9;">
+  <div class="res-title">NET PROFIT (PER CONTAINER)</div>
+  <div class="res-val" id="profit_aed">AED 0.00</div>
+  <div class="metric" id="profit_inr">₹0 INR | $0 USD</div>
+  <div class="metric" id="roi_val">ROI Margin: 0%</div>
+</div>
+
+<div class="box">
+  <div class="metric" id="landed_bag">Landed Cost / Bag: AED 0</div>
+  <div class="metric" id="landed_mt">Landed Cost / MT: AED 0</div>
+</div>
+
+<script>
+function toINR(val, curr) {
+  let u = parseFloat(document.getElementById('usd_inr').value) || 95.9;
+  let a = parseFloat(document.getElementById('aed_inr').value) || 26.09;
+  if(curr === 'USD') return val * u;
+  if(curr === 'AED') return val * a;
+  return val;
+}
+
+function calc() {
+  let u = parseFloat(document.getElementById('usd_inr').value) || 95.9;
+  let a = parseFloat(document.getElementById('aed_inr').value) || 26.09;
+  let qty = parseFloat(document.getElementById('qty').value) || 0;
+  let bag = parseFloat(document.getElementById('bag').value) || 1;
+  let totalKg = qty * 1000;
+  let totalBags = totalKg / bag;
+
+  let exmill = toINR(parseFloat(document.getElementById('exmill').value)||0, document.getElementById('exmill_c').value) * totalKg;
+  let pkg = toINR(parseFloat(document.getElementById('pkg').value)||0, document.getElementById('pkg_c').value) * totalBags;
+  let inland = toINR(parseFloat(document.getElementById('inland').value)||0, document.getElementById('inland_c').value);
+  let freight = toINR(parseFloat(document.getElementById('freight').value)||0, document.getElementById('freight_c').value);
+  let uae = toINR(parseFloat(document.getElementById('uae_costs').value)||0, document.getElementById('uae_c').value);
+
+  let totalCostINR = exmill + pkg + inland + freight + uae;
+  let totalCostAED = totalCostINR / a;
+
+  let sell = toINR(parseFloat(document.getElementById('sell').value)||0, document.getElementById('sell_c').value) * totalBags;
+  let profitINR = sell - totalCostINR;
+  let profitAED = profitINR / a;
+  let profitUSD = profitINR / u;
+  let roi = totalCostINR > 0 ? (profitINR / totalCostINR) * 100 : 0;
+
+  document.getElementById('profit_aed').innerText = 'AED ' + profitAED.toFixed(2);
+  document.getElementById('profit_inr').innerText = '₹' + Math.round(profitINR).toLocaleString('en-IN') + ' INR | $' + Math.round(profitUSD).toLocaleString('en-US') + ' USD';
+  document.getElementById('roi_val').innerText = 'ROI Margin: ' + roi.toFixed(1) + '%';
+  document.getElementById('landed_bag').innerText = 'Landed Cost / Bag: AED ' + (totalCostAED / totalBags).toFixed(2);
+  document.getElementById('landed_mt').innerText = 'Landed Cost / MT: AED ' + (totalCostAED / qty).toFixed(2);
+}
+calc();
+</script>
+</body>
+</html>
