@@ -1,89 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rice Export P&L Calculator</title>
-<style>
-  body { font-family: sans-serif; padding: 12px; background: #f4f6f9; color: #333; margin:0; }
-  h2 { color: #003366; font-size: 18px; margin-top: 0; }
-  .box { background: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-  label { font-size: 12px; font-weight: bold; display: block; margin-top: 8px; }
-  .row { display: flex; gap: 8px; }
-  input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
-  .res-title { font-size: 12px; color: #666; }
-  .res-val { font-size: 20px; font-weight: bold; color: #28a745; margin-top: 4px; }
-  .metric { font-size: 12px; background: #e9ecef; padding: 6px; border-radius: 4px; margin-top: 4px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Merchant - Export P&L</title>
+    
+    <!-- Mobile App Home Screen Icons & PWA Settings -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/color/180/rice-bag.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/color/32/rice-bag.png">
+    <link rel="shortcut icon" href="https://img.icons8.com/color/96/rice-bag.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#003366">
+
+    <style>
+        :root {
+            --primary: #003366;
+            --accent: #28a745;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --border: #dce1e7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: #2c3e50;
+            margin: 0;
+            padding: 12px;
+            padding-bottom: 30px;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #003366 0%, #001f3f 100%);
+            color: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+        }
+
+        .app-header img {
+            width: 42px;
+            height: 42px;
+            vertical-align: middle;
+            margin-bottom: 6px;
+        }
+
+        .app-header h1 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .app-header .subtitle {
+            font-size: 11px;
+            opacity: 0.85;
+            margin-top: 3px;
+        }
+
+        .box {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-top: 8px;
+            margin-bottom: 3px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #fdfdfd;
+            color: #1a1a1a;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+        }
+
+        .res-box {
+            background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 1px solid #a5d6a7;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .res-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #2e7d32;
+            letter-spacing: 0.5px;
+        }
+
+        .res-val {
+            font-size: 26px;
+            font-weight: 800;
+            color: #1b5e20;
+            margin: 4px 0;
+        }
+
+        .metric-badge {
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-top: 6px;
+            display: inline-block;
+            color: #2e7d32;
+        }
+
+        .detail-card {
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
 
-<h2>🌾 Export P&L Calculator</h2>
-
-<div class="box">
-  <label>Exchange Rates</label>
-  <div class="row">
-    <input type="number" id="usd_inr" value="95.90" step="0.1" oninput="calc()" placeholder="1 USD in INR">
-    <input type="number" id="aed_inr" value="26.09" step="0.1" oninput="calc()" placeholder="1 AED in INR">
-  </div>
+<div class="app-header">
+    <img src="https://img.icons8.com/color/96/rice-bag.png" alt="Logo">
+    <h1>ROYAL MERCHANT LLC</h1>
+    <div class="subtitle">Multi-Currency Rice Export Calculator</div>
 </div>
 
 <div class="box">
-  <label>Cargo Details</label>
-  <div class="row">
-    <input type="number" id="qty" value="24" oninput="calc()" placeholder="Quantity (MT)">
-    <input type="number" id="bag" value="50" oninput="calc()" placeholder="Bag Weight (kg)">
-  </div>
-
-  <label>Ex-Mill Price (per kg)</label>
-  <div class="row">
-    <input type="number" id="exmill" value="33" oninput="calc()">
-    <select id="exmill_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
-  </div>
-
-  <label>Packaging (per bag)</label>
-  <div class="row">
-    <input type="number" id="pkg" value="18" oninput="calc()">
-    <select id="pkg_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
-  </div>
-
-  <label>Inland Transport & Port (India)</label>
-  <div class="row">
-    <input type="number" id="inland" value="68500" oninput="calc()">
-    <select id="inland_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
-  </div>
-
-  <label>Ocean Freight</label>
-  <div class="row">
-    <input type="number" id="freight" value="500" oninput="calc()">
-    <select id="freight_c" onchange="calc()"><option value="USD">USD</option><option value="AED">AED</option><option value="INR">INR</option></select>
-  </div>
-
-  <label>UAE Port, Clearance & Trucking</label>
-  <div class="row">
-    <input type="number" id="uae_costs" value="3246" oninput="calc()">
-    <select id="uae_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
-  </div>
+    <div class="section-title">💱 Exchange Rates Base</div>
+    <div class="row">
+        <div>
+            <label>1 USD in INR</label>
+            <input type="number" id="usd_inr" value="95.90" step="0.1" oninput="calc()">
+        </div>
+        <div>
+            <label>1 AED in INR</label>
+            <input type="number" id="aed_inr" value="26.09" step="0.1" oninput="calc()">
+        </div>
+    </div>
 </div>
 
 <div class="box">
-  <label>Selling Price (per 50kg bag)</label>
-  <div class="row">
-    <input type="number" id="sell" value="106" oninput="calc()">
-    <select id="sell_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
-  </div>
-</div>
+    <div class="section-title">📦 Cargo & Origin Costs</div>
+    <div class="row">
+        <div>
+            <label>Quantity (MT)</label>
+            <input type="number" id="qty" value="24" oninput="calc()">
+        </div>
+        <div>
+            <label>Bag Weight (kg)</label>
+            <input type="number" id="bag" value="50" oninput="calc()">
+        </div>
+    </div>
 
-<div class="box" style="background:#e8f5e9;">
-  <div class="res-title">NET PROFIT (PER CONTAINER)</div>
-  <div class="res-val" id="profit_aed">AED 0.00</div>
-  <div class="metric" id="profit_inr">₹0 INR | $0 USD</div>
-  <div class="metric" id="roi_val">ROI Margin: 0%</div>
+    <label>Ex-Mill Price (per kg)</label>
+    <div class="row">
+        <input type="number" id="exmill" value="33" step="0.1" oninput="calc()">
+        <select id="exmill_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+    </div>
+
+    <label>Packaging (per bag)</label>
+    <div class="row">
+        <input type="number" id="pkg" value="18" oninput="calc()">
+        <select id="pkg_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+    </div>
+
+    <label>Inland Freight & Port (India)</label>
+    <div class="row">
+        <input type="number" id="inland" value="68500" oninput="calc()">
+        <select id="inland_c" onchange="calc()"><option value="INR">INR</option><option value="AED">AED</option><option value="USD">USD</option></select>
+    </div>
 </div>
 
 <div class="box">
-  <div class="metric" id="landed_bag">Landed Cost / Bag: AED 0</div>
-  <div class="metric" id="landed_mt">Landed Cost / MT: AED 0</div>
+    <div class="section-title">🚢 Freight & Destination (UAE)</div>
+    <label>Ocean Freight</label>
+    <div class="row">
+        <input type="number" id="freight" value="500" oninput="calc()">
+        <select id="freight_c" onchange="calc()"><option value="USD">USD</option><option value="AED">AED</option><option value="INR">INR</option></select>
+    </div>
+
+    <label>UAE Port, Clearance & Trucking</label>
+    <div class="row">
+        <input type="number" id="uae_costs" value="3246" oninput="calc()">
+        <select id="uae_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
+    </div>
+</div>
+
+<div class="box">
+    <div class="section-title">🏷️ Selling Target</div>
+    <label>Selling Price (per 50kg bag)</label>
+    <div class="row">
+        <input type="number" id="sell" value="106" step="0.5" oninput="calc()">
+        <select id="sell_c" onchange="calc()"><option value="AED">AED</option><option value="USD">USD</option><option value="INR">INR</option></select>
+    </div>
+</div>
+
+<div class="res-box">
+    <div class="res-title">NET PROFIT (PER CONTAINER)</div>
+    <div class="res-val" id="profit_aed">AED 0.00</div>
+    <div class="metric-badge" id="profit_inr">₹0 INR | $0 USD</div>
+    <div class="metric-badge" id="roi_val" style="background:#003366; color:#fff; margin-left:4px;">ROI: 0%</div>
+</div>
+
+<div class="box">
+    <div class="section-title">📊 Unit Metrics</div>
+    <div class="detail-card">
+        <span>Landed Cost / 50kg Bag:</span>
+        <strong id="landed_bag">AED 0.00</strong>
+    </div>
+    <div class="detail-card">
+        <span>Landed Cost / Metric Ton:</span>
+        <strong id="landed_mt">AED 0.00</strong>
+    </div>
+    <div class="detail-card">
+        <span>CIF Jebel Ali Value / MT:</span>
+        <strong id="cif_mt">$0.00 USD</strong>
+    </div>
 </div>
 
 <script>
@@ -118,11 +292,16 @@ function calc() {
   let profitUSD = profitINR / u;
   let roi = totalCostINR > 0 ? (profitINR / totalCostINR) * 100 : 0;
 
+  // CIF Value calculation
+  let cifINR = exmill + pkg + inland + freight;
+  let cifUSDPerMT = (cifINR / u) / (qty || 1);
+
   document.getElementById('profit_aed').innerText = 'AED ' + profitAED.toFixed(2);
   document.getElementById('profit_inr').innerText = '₹' + Math.round(profitINR).toLocaleString('en-IN') + ' INR | $' + Math.round(profitUSD).toLocaleString('en-US') + ' USD';
-  document.getElementById('roi_val').innerText = 'ROI Margin: ' + roi.toFixed(1) + '%';
-  document.getElementById('landed_bag').innerText = 'Landed Cost / Bag: AED ' + (totalCostAED / totalBags).toFixed(2);
-  document.getElementById('landed_mt').innerText = 'Landed Cost / MT: AED ' + (totalCostAED / qty).toFixed(2);
+  document.getElementById('roi_val').innerText = 'ROI: ' + roi.toFixed(1) + '%';
+  document.getElementById('landed_bag').innerText = 'AED ' + (totalCostAED / totalBags).toFixed(2);
+  document.getElementById('landed_mt').innerText = 'AED ' + (totalCostAED / qty).toFixed(2);
+  document.getElementById('cif_mt').innerText = '$' + cifUSDPerMT.toFixed(2) + ' USD';
 }
 calc();
 </script>
