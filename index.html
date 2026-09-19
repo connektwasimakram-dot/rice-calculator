@@ -709,6 +709,47 @@
         background: #eef2f6;
       }
 
+      /* The calculator is intentionally a dedicated route. Keep the legacy
+         markup in this file harmless for older cached versions of the home page. */
+      .calculator-section {
+        display: none;
+      }
+
+      .calculator-cta {
+        background: #eef2f6;
+      }
+
+      .calculator-cta-card {
+        display: grid;
+        gap: 20px;
+        align-items: center;
+        padding: 25px;
+        color: #fff;
+        background:
+          radial-gradient(circle at 90% 20%, rgba(40, 167, 69, 0.2), transparent 25%),
+          linear-gradient(135deg, var(--navy-deep), var(--navy));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .calculator-cta-card h2 {
+        margin: 12px 0 7px;
+        font-size: clamp(1.6rem, 5vw, 2.3rem);
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .calculator-cta-card p {
+        max-width: 590px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.84rem;
+      }
+
+      .calculator-cta-card .eyebrow {
+        color: #a4ddb0;
+      }
+
       .calculator-layout {
         display: grid;
         gap: 18px;
@@ -1526,6 +1567,11 @@
           align-items: start;
         }
 
+        .calculator-cta-card {
+          grid-template-columns: 1fr auto;
+          padding: 36px 40px;
+        }
+
         .calculator-form {
           padding: 25px;
         }
@@ -1612,14 +1658,14 @@
             </button>
             <div class="services-dropdown">
               <a href="#services">Global Rice Supply &amp; Sourcing</a>
-              <a href="#calculator">Export P&amp;L &amp; Quotation Calculator</a>
+              <a href="calculator.html">Export P&amp;L &amp; Quotation Calculator</a>
               <a href="#services">Customs Clearance &amp; Logistics</a>
               <a href="#services">Private Label Packaging</a>
             </div>
           </div>
           <a href="#about">About Us</a>
           <a href="#contact">Contact Us</a>
-          <a class="nav-cta" href="#calculator">Build a quote <span aria-hidden="true">↗</span></a>
+          <a class="nav-cta" href="calculator.html">Build a quote <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
     </header>
@@ -1636,7 +1682,7 @@
               and move cargo with a partner who understands the corridor.
             </p>
             <div class="hero-actions">
-              <a class="button button-primary" href="#calculator">
+              <a class="button button-primary" href="calculator.html">
                 Open export calculator
                 <span aria-hidden="true">↗</span>
               </a>
@@ -2017,6 +2063,24 @@
         </div>
       </section>
 
+      <section class="section calculator-cta" aria-labelledby="calculator-cta-title">
+        <div class="container">
+          <div class="calculator-cta-card">
+            <div>
+              <span class="eyebrow">Export quotation desk</span>
+              <h2>Know the landed economics before you quote.</h2>
+              <p>
+                Use the dedicated calculator to model your container costs,
+                target pricing, ROI and shareable client-ready reports.
+              </p>
+            </div>
+            <a class="button button-primary" href="calculator.html">
+              Open calculator <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section class="section" id="services">
         <div class="container">
           <div class="section-heading">
@@ -2040,7 +2104,7 @@
               <span class="service-card-icon" aria-hidden="true">∑</span>
               <h3>Export P&amp;L &amp; quotation calculator</h3>
               <p>Model costs and target pricing across INR, AED and USD before you quote.</p>
-              <a href="#calculator">Open calculator <span>↗</span></a>
+              <a href="calculator.html">Open calculator <span>↗</span></a>
             </article>
             <article class="service-card">
               <span class="service-card-icon" aria-hidden="true">⌁</span>
@@ -2161,7 +2225,7 @@
         <div class="footer-col">
           <h4>Explore</h4>
           <a href="#commodities">Commodities</a>
-          <a href="#calculator">Export calculator</a>
+          <a href="calculator.html">Export calculator</a>
           <a href="#services">Services</a>
         </div>
         <div class="footer-col">
