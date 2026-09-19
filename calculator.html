@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
       :root {
         --navy: #003366;
@@ -338,34 +338,133 @@
         input.addEventListener("change", calculate);
       });
 
-      $("#download-pdf").addEventListener("click", async () => {
-        const source = $("#pdf-report");
-        if (typeof html2pdf === "undefined") {
-          window.print();
+      function printFallback() {
+        const printWindow = window.open("", "_blank", "noopener,noreferrer");
+        if (!printWindow) {
+          toast("Allow pop-ups to print the quotation report.");
           return;
         }
-        const exportNode = source.cloneNode(true);
-        exportNode.id = "pdf-export-node";
-        exportNode.style.cssText = "position:fixed;left:0;top:0;z-index:99999;width:794px;margin:0;padding:24px;background:#fff;color:#142536;box-shadow:none;";
-        document.body.appendChild(exportNode);
-        toast("Preparing your PDF report…");
-        try {
-          await html2pdf().set({
-            margin: 0.25,
-            filename: "Royal_Merchant_Rice_Export_Quotation.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false },
-            jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-            pagebreak: { mode: ["css", "legacy"] },
-          }).from(exportNode).save();
-        } catch (error) {
-          console.error("PDF export failed", error);
-          toast("PDF export was unavailable. Opening the print dialog instead.");
-          window.print();
-        } finally {
-          exportNode.remove();
+        printWindow.document.write(`<!doctype html><html><head><title>Royal Merchant Rice Export Quotation</title><style>body{margin:0;padding:28px;font-family:Arial,sans-serif;color:#142536}#pdf-report{max-width:760px;margin:auto}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #dce5ed;text-align:left}th:last-child,td:last-child{text-align:right}</style></head><body>${$("#pdf-report").outerHTML}</body></html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 300);
+      }
+
+      function buildPdf() {
+        const pdfApi = window.jspdf;
+        if (!pdfApi || !pdfApi.jsPDF || !latest) {
+          printFallback();
+          return;
         }
-      });
+        const doc = new pdfApi.jsPDF({ unit: "pt", format: "a4", compress: true });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 40;
+        const contentWidth = pageWidth - margin * 2;
+        const navy = [0, 51, 102];
+        const green = [40, 167, 69];
+        const muted = [96, 113, 132];
+
+        doc.setFillColor(...navy);
+        doc.rect(0, 0, pageWidth, 86, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.text("ROYAL MERCHANT LLC", margin, 34);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text("India–UAE rice export desk", margin, 51);
+        doc.text(`Prepared ${new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}`, pageWidth - margin, 34, { align: "right" });
+
+        let y = 122;
+        doc.setTextColor(...navy);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Rice Export Quotation & Financial Breakdown", margin, y);
+        y += 17;
+        doc.setTextColor(...muted);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text("Indicative shipment economics generated from the live calculator.", margin, y);
+        y += 25;
+
+        const cards = [
+          ["NET PROFIT / CONTAINER", money(latest.profitAED, "AED")],
+          ["ROI", `${latest.roi.toFixed(1)}%`],
+          ["LANDED COST / 50 KG BAG", money(latest.landedBag, "AED")],
+          ["CIF / MT", money(latest.cifMT, "USD")],
+        ];
+        const cardGap = 9;
+        const cardWidth = (contentWidth - cardGap * 3) / 4;
+        cards.forEach(([label, value], index) => {
+          const x = margin + index * (cardWidth + cardGap);
+          doc.setFillColor(243, 247, 250);
+          doc.roundedRect(x, y, cardWidth, 52, 6, 6, "F");
+          doc.setTextColor(...muted);
+          doc.setFontSize(7);
+          doc.text(label, x + 8, y + 16);
+          doc.setTextColor(...navy);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.text(value, x + 8, y + 35);
+        });
+        y += 77;
+
+        const rows = [
+          [labelFor(ids.qty), `${num(ids.qty)} MT`],
+          [labelFor(ids.bag), `${num(ids.bag)} kg`],
+          [labelFor(ids.exmill), `${valueWithCurrency(ids.exmill, ids.exmillCurrency)} / kg`],
+          [labelFor(ids.packaging), `${valueWithCurrency(ids.packaging, ids.packagingCurrency)} / bag`],
+          [labelFor(ids.inland), valueWithCurrency(ids.inland, ids.inlandCurrency)],
+          [labelFor(ids.freight), valueWithCurrency(ids.freight, ids.freightCurrency)],
+          [labelFor(ids.uae), valueWithCurrency(ids.uae, ids.uaeCurrency)],
+          [labelFor(ids.sell), `${valueWithCurrency(ids.sell, ids.sellCurrency)} / bag`],
+          ["Total shipment cost", money(latest.totalCost / latest.aed, "AED")],
+          ["Total shipment value", money(latest.revenue / latest.aed, "AED")],
+        ];
+        doc.setFillColor(...navy);
+        doc.rect(margin, y, contentWidth, 22, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("QUOTATION INPUT", margin + 8, y + 14);
+        doc.text("VALUE", pageWidth - margin - 8, y + 14, { align: "right" });
+        y += 22;
+        rows.forEach(([label, value]) => {
+          doc.setDrawColor(220, 229, 237);
+          doc.setLineWidth(0.5);
+          doc.line(margin, y + 22, pageWidth - margin, y + 22);
+          doc.setTextColor(38, 55, 70);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.text(label, margin + 8, y + 15);
+          doc.setTextColor(...navy);
+          doc.setFont("helvetica", "bold");
+          doc.text(value, pageWidth - margin - 8, y + 15, { align: "right" });
+          y += 22;
+        });
+        y += 25;
+        doc.setTextColor(...green);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("Net profit / container", margin, y);
+        doc.text(money(latest.profitAED, "AED"), pageWidth - margin, y, { align: "right" });
+        y += 22;
+        doc.setTextColor(...muted);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const footer = "Royal Merchant LLC · India–UAE agricultural trade corridor · This report is a commercial estimate and not a final invoice.";
+        doc.text(footer, margin, 805);
+
+        const blob = doc.output("blob");
+        const file = new File([blob], "Royal_Merchant_Rice_Export_Quotation.pdf", { type: "application/pdf" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: "Royal Merchant rice export quotation" }).catch(() => {});
+        }
+        doc.save("Royal_Merchant_Rice_Export_Quotation.pdf");
+        toast("PDF report downloaded successfully.");
+      }
+
+      $("#download-pdf").addEventListener("click", buildPdf);
 
       $("#share-whatsapp").addEventListener("click", () => {
         const message = [
