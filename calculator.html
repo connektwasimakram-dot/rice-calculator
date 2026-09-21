@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
       :root {
         --navy: #003366;
@@ -212,6 +211,8 @@
             <div class="roi"><span>Return on investment</span><strong id="roi-value">0.0%</strong></div>
             <div class="metrics">
               <div class="metric"><span>Landed cost / 50 kg bag</span><strong id="landed-bag">AED 0.00</strong></div>
+              <div class="metric"><span>Landed cost / kg</span><strong id="landed-kg">AED 0.00</strong></div>
+              <div class="metric"><span>18 kg bag landing price</span><strong id="landed-18kg">AED 0.00</strong></div>
               <div class="metric"><span>Landed cost / metric ton</span><strong id="landed-mt">AED 0.00</strong></div>
               <div class="metric"><span>CIF Jebel Ali / Khor Fakkan / MT</span><strong id="cif-mt">USD 0.00</strong></div>
               <div class="metric"><span>Total shipment value</span><strong class="green" id="revenue-aed">AED 0.00</strong></div>
@@ -291,12 +292,15 @@
         const totalCost = exmill + packaging + inland + freight + uae;
         const profit = revenue - totalCost;
         const cif = exmill + packaging + inland + freight;
-        latest = { usd, aed, qty, bagWeight, bags, totalCost, revenue, profit, profitAED: profit / aed, profitUSD: profit / usd, roi: totalCost > 0 ? profit / totalCost * 100 : 0, landedBag: bags > 0 ? totalCost / aed / bags : 0, landedMT: qty > 0 ? totalCost / aed / qty : 0, cifMT: qty > 0 ? cif / usd / qty : 0 };
+        const landedKg = totalKg > 0 ? totalCost / aed / totalKg : 0;
+        latest = { usd, aed, qty, bagWeight, bags, totalCost, revenue, profit, profitAED: profit / aed, profitUSD: profit / usd, roi: totalCost > 0 ? profit / totalCost * 100 : 0, landedKg, landedBag: bags > 0 ? totalCost / aed / bags : 0, landed18kg: landedKg * 18, landedMT: qty > 0 ? totalCost / aed / qty : 0, cifMT: qty > 0 ? cif / usd / qty : 0 };
         $("#profit-aed").textContent = money(latest.profitAED, "AED");
         $("#profit-inr").textContent = `${money(profit, "INR", 0)} INR`;
         $("#profit-usd").textContent = `${money(latest.profitUSD, "USD", 0)} USD`;
         $("#roi-value").textContent = `${latest.roi.toFixed(1)}%`;
         $("#landed-bag").textContent = money(latest.landedBag, "AED");
+        $("#landed-kg").textContent = money(latest.landedKg, "AED");
+        $("#landed-18kg").textContent = money(latest.landed18kg, "AED");
         $("#landed-mt").textContent = money(latest.landedMT, "AED");
         $("#cif-mt").textContent = money(latest.cifMT, "USD");
         $("#revenue-aed").textContent = money(latest.revenue / aed, "AED");
@@ -320,6 +324,8 @@
           [labelFor(ids.freight), valueWithCurrency(ids.freight, ids.freightCurrency)],
           [labelFor(ids.uae), valueWithCurrency(ids.uae, ids.uaeCurrency)],
           [labelFor(ids.sell), `${valueWithCurrency(ids.sell, ids.sellCurrency)} / bag`],
+          ["Landed cost / kg", money(latest.landedKg, "AED")],
+          ["18 kg bag landing price", money(latest.landed18kg, "AED")],
           ["Total shipment cost", money(latest.totalCost / latest.aed, "AED")],
           ["Total shipment value", money(latest.revenue / latest.aed, "AED")],
         ];
@@ -350,64 +356,57 @@
         setTimeout(() => printWindow.print(), 300);
       }
 
-      function buildPdf() {
-        const pdfApi = window.jspdf;
-        if (!pdfApi || !pdfApi.jsPDF || !latest) {
-          printFallback();
-          return;
-        }
-        const doc = new pdfApi.jsPDF({ unit: "pt", format: "a4", compress: true });
-        const pageWidth = doc.internal.pageSize.getWidth();
+      function pdfSafe(value) {
+        return String(value)
+          .replace(/₹/g, "INR ")
+          .replace(/[^\x20-\x7E]/g, "-")
+          .replace(/\\/g, "\\\\")
+          .replace(/\(/g, "\\(")
+          .replace(/\)/g, "\\)");
+      }
+
+      function makePlainPdf() {
+        const width = 595;
+        const height = 842;
         const margin = 40;
-        const contentWidth = pageWidth - margin * 2;
         const navy = [0, 51, 102];
         const green = [40, 167, 69];
         const muted = [96, 113, 132];
+        const ink = [38, 55, 70];
+        const commands = [];
+        const rgb = (color) => color.map((part) => (part / 255).toFixed(3)).join(" ");
+        const text = (value, x, top, size, color = ink, bold = false) => {
+          const font = bold ? "/F2" : "/F1";
+          commands.push(`${rgb(color)} rg BT ${font} ${size} Tf 1 0 0 1 ${x} ${height - top} Tm (${pdfSafe(value)}) Tj ET`);
+        };
+        const rect = (x, top, w, h, color) => {
+          commands.push(`${rgb(color)} rg ${x} ${height - top - h} ${w} ${h} re f`);
+        };
+        const line = (x1, top, x2, color = [220, 229, 237]) => {
+          commands.push(`${rgb(color)} RG 0.5 w ${x1} ${height - top} m ${x2} ${height - top} l S`);
+        };
 
-        doc.setFillColor(...navy);
-        doc.rect(0, 0, pageWidth, 86, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(17);
-        doc.text("ROYAL MERCHANT LLC", margin, 34);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.text("India–UAE rice export desk", margin, 51);
-        doc.text(`Prepared ${new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}`, pageWidth - margin, 34, { align: "right" });
-
-        let y = 122;
-        doc.setTextColor(...navy);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("Rice Export Quotation & Financial Breakdown", margin, y);
-        y += 17;
-        doc.setTextColor(...muted);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.text("Indicative shipment economics generated from the live calculator.", margin, y);
-        y += 25;
+        rect(0, 0, width, 86, navy);
+        text("ROYAL MERCHANT LLC", margin, 34, 17, [255, 255, 255], true);
+        text("India-UAE rice export desk", margin, 51, 9, [255, 255, 255]);
+        text(`Prepared ${new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}`, width - margin - 138, 34, 8, [255, 255, 255]);
+        text("Rice Export Quotation & Financial Breakdown", margin, 122, 16, navy, true);
+        text("Indicative shipment economics generated from the live calculator.", margin, 139, 9, muted);
 
         const cards = [
           ["NET PROFIT / CONTAINER", money(latest.profitAED, "AED")],
           ["ROI", `${latest.roi.toFixed(1)}%`],
-          ["LANDED COST / 50 KG BAG", money(latest.landedBag, "AED")],
-          ["CIF / MT", money(latest.cifMT, "USD")],
+          ["LANDED COST / KG", money(latest.landedKg, "AED")],
+          ["18 KG BAG LANDING", money(latest.landed18kg, "AED")],
         ];
         const cardGap = 9;
-        const cardWidth = (contentWidth - cardGap * 3) / 4;
+        const cardWidth = (width - margin * 2 - cardGap * 3) / 4;
         cards.forEach(([label, value], index) => {
           const x = margin + index * (cardWidth + cardGap);
-          doc.setFillColor(243, 247, 250);
-          doc.roundedRect(x, y, cardWidth, 52, 6, 6, "F");
-          doc.setTextColor(...muted);
-          doc.setFontSize(7);
-          doc.text(label, x + 8, y + 16);
-          doc.setTextColor(...navy);
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(10);
-          doc.text(value, x + 8, y + 35);
+          rect(x, 157, cardWidth, 52, [243, 247, 250]);
+          text(label, x + 8, 173, 6.5, muted, true);
+          text(value, x + 8, 193, 9.5, navy, true);
         });
-        y += 77;
 
         const rows = [
           [labelFor(ids.qty), `${num(ids.qty)} MT`],
@@ -418,49 +417,57 @@
           [labelFor(ids.freight), valueWithCurrency(ids.freight, ids.freightCurrency)],
           [labelFor(ids.uae), valueWithCurrency(ids.uae, ids.uaeCurrency)],
           [labelFor(ids.sell), `${valueWithCurrency(ids.sell, ids.sellCurrency)} / bag`],
+          ["Landed cost / kg", money(latest.landedKg, "AED")],
+          ["18 kg bag landing price", money(latest.landed18kg, "AED")],
           ["Total shipment cost", money(latest.totalCost / latest.aed, "AED")],
           ["Total shipment value", money(latest.revenue / latest.aed, "AED")],
         ];
-        doc.setFillColor(...navy);
-        doc.rect(margin, y, contentWidth, 22, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.text("QUOTATION INPUT", margin + 8, y + 14);
-        doc.text("VALUE", pageWidth - margin - 8, y + 14, { align: "right" });
-        y += 22;
-        rows.forEach(([label, value]) => {
-          doc.setDrawColor(220, 229, 237);
-          doc.setLineWidth(0.5);
-          doc.line(margin, y + 22, pageWidth - margin, y + 22);
-          doc.setTextColor(38, 55, 70);
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(8.5);
-          doc.text(label, margin + 8, y + 15);
-          doc.setTextColor(...navy);
-          doc.setFont("helvetica", "bold");
-          doc.text(value, pageWidth - margin - 8, y + 15, { align: "right" });
-          y += 22;
+        rect(margin, 232, width - margin * 2, 22, navy);
+        text("QUOTATION INPUT", margin + 8, 247, 8, [255, 255, 255], true);
+        text("VALUE", width - margin - 43, 247, 8, [255, 255, 255], true);
+        rows.forEach(([label, value], index) => {
+          const top = 254 + index * 22;
+          line(margin, top + 22, width - margin);
+          text(label, margin + 8, top + 15, 8.5, ink);
+          text(value, width - margin - Math.min(155, Math.max(45, value.length * 4.2)), top + 15, 8.5, navy, true);
         });
-        y += 25;
-        doc.setTextColor(...green);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.text("Net profit / container", margin, y);
-        doc.text(money(latest.profitAED, "AED"), pageWidth - margin, y, { align: "right" });
-        y += 22;
-        doc.setTextColor(...muted);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        const footer = "Royal Merchant LLC · India–UAE agricultural trade corridor · This report is a commercial estimate and not a final invoice.";
-        doc.text(footer, margin, 805);
+        text("Net profit / container", margin, 550, 10, green, true);
+        text(money(latest.profitAED, "AED"), width - margin - 65, 550, 10, green, true);
+        text("Royal Merchant LLC - India-UAE agricultural trade corridor - Commercial estimate, not a final invoice.", margin, 805, 7.5, muted);
 
-        const blob = doc.output("blob");
-        const file = new File([blob], "Royal_Merchant_Rice_Export_Quotation.pdf", { type: "application/pdf" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: "Royal Merchant rice export quotation" }).catch(() => {});
-        }
-        doc.save("Royal_Merchant_Rice_Export_Quotation.pdf");
+        const stream = commands.join("\n");
+        const objects = [
+          "<< /Type /Catalog /Pages 2 0 R >>",
+          "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+          "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+          "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+          "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+          `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+        ];
+        let pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+        const offsets = [0];
+        objects.forEach((object, index) => {
+          offsets.push(pdf.length);
+          pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+        });
+        const xref = pdf.length;
+        pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+        offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, "0")} 00000 n \n`; });
+        pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+        return new Blob([pdf], { type: "application/pdf" });
+      }
+
+      function buildPdf() {
+        if (!latest) return;
+        const blob = makePlainPdf();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "Royal_Merchant_Rice_Export_Quotation.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast("PDF report downloaded successfully.");
       }
 

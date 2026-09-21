@@ -1,4 +1,4 @@
-const CACHE_NAME = "royal-merchant-v2";
+const CACHE_NAME = "royal-merchant-v3";
 const APP_SHELL = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
