@@ -313,7 +313,7 @@
         z-index: 1;
         display: grid;
         gap: 38px;
-        padding-block: 62px 52px;
+        padding-block: 72px 64px;
       }
 
       .hero-copy {
@@ -327,14 +327,17 @@
       .hero h1 {
         max-width: 650px;
         margin: 18px 0 16px;
-        font-size: clamp(2.35rem, 10vw, 4.6rem);
-        line-height: 1.04;
+        font-size: clamp(2.6rem, 11vw, 5rem);
+        line-height: 1.1;
         letter-spacing: -0.055em;
       }
 
       .hero h1 em {
         color: #9fe4ad;
         font-style: normal;
+        background: rgba(40, 167, 69, 0.15);
+        padding: 2px 8px;
+        border-radius: 8px;
       }
 
       .hero p {
@@ -342,6 +345,7 @@
         margin: 0;
         color: rgba(255, 255, 255, 0.78);
         font-size: 1.02rem;
+        line-height: 1.6;
       }
 
       .hero-actions {
@@ -353,14 +357,14 @@
 
       .button {
         display: inline-flex;
-        min-height: 46px;
+        min-height: 52px;
         align-items: center;
         justify-content: center;
         gap: 9px;
-        padding: 0 17px;
+        padding: 0 24px;
         border: 1px solid transparent;
         border-radius: 10px;
-        font-size: 0.84rem;
+        font-size: 0.95rem;
         font-weight: 800;
         cursor: pointer;
         transition:
@@ -373,6 +377,10 @@
         transform: translateY(-2px);
       }
 
+      .button:active {
+        transform: translateY(0);
+      }
+
       .button-primary {
         color: var(--navy);
         background: #fff;
@@ -381,6 +389,7 @@
 
       .button-primary:hover {
         background: #effff2;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
       }
 
       .button-secondary {
@@ -390,7 +399,8 @@
       }
 
       .button-secondary:hover {
-        background: rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
       }
 
       .hero-proof {
@@ -1517,7 +1527,7 @@
           grid-template-columns: 1.1fr 0.75fr;
           min-height: 575px;
           align-items: center;
-          padding-block: 82px 70px;
+          padding-block: 110px 90px;
         }
 
         .hero-card {
