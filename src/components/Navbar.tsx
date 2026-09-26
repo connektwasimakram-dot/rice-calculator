@@ -9,7 +9,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Zone 1: Single text element wordmark */}
         <Link href="/" className="flex items-center gap-2.5 text-white transition hover:opacity-90">
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600/20 text-emerald-400 font-semibold text-sm border border-emerald-500/30">
