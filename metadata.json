@@ -1,0 +1,8 @@
+{
+  "name": "Royal Merchant Rice Export Quotation Desk",
+  "description": "Export quotation desk & landed cost calculator for agricultural trade corridor between India and the UAE.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
